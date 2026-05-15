@@ -1,13 +1,13 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #f4f7fb;
+  --bg: #ffffff;
   --surface: #ffffff;
-  --text: #1f2937;
-  --muted: #6b7280;
-  --border: #dbe3ef;
-  --accent: #0f766e;
-  --accent-dark: #0b5f58;
+  --text: #02027f;
+  --muted: #4a4ab3;
+  --border: #cfd0ff;
+  --accent: #02027f;
+  --accent-dark: #01015a;
 }
 
 * {
@@ -18,7 +18,7 @@ html,
 body {
   margin: 0;
   padding: 0;
-  background: radial-gradient(circle at 20% 0%, #e3edf8 0%, var(--bg) 40%);
+  background: radial-gradient(circle at 20% 0%, #eef0ff 0%, var(--bg) 42%);
   color: var(--text);
   font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
 }
@@ -36,11 +36,11 @@ a {
 }
 
 .hero {
-  background: linear-gradient(135deg, #0f766e 0%, #0e7490 65%, #0369a1 100%);
+  background: linear-gradient(135deg, #02027f 0%, #0d0d96 65%, #1a1aa8 100%);
   border-radius: 18px;
   padding: 24px 18px;
-  color: #ecfeff;
-  box-shadow: 0 16px 35px rgba(14, 116, 144, 0.25);
+  color: #ffffff;
+  box-shadow: 0 16px 35px rgba(2, 2, 127, 0.26);
 }
 
 .hero h1 {
@@ -77,7 +77,7 @@ a {
   border-radius: 14px;
   padding: 16px;
   display: block;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 6px 18px rgba(2, 2, 127, 0.08);
   transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
 
@@ -125,7 +125,7 @@ a {
   border-radius: 14px;
   padding: 16px;
   margin-bottom: 14px;
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
+  box-shadow: 0 6px 16px rgba(2, 2, 127, 0.07);
 }
 
 .panel h2 {
@@ -146,15 +146,16 @@ a {
 
 .form-stack input {
   width: 100%;
-  border: 1px solid #c7d2df;
+  border: 1px solid #b9bbff;
   border-radius: 10px;
   background: #ffffff;
   padding: 11px 12px;
   font-size: 0.95rem;
+  color: var(--text);
 }
 
 .form-stack input:focus {
-  outline: 2px solid rgba(15, 118, 110, 0.25);
+  outline: 2px solid rgba(2, 2, 127, 0.24);
   border-color: var(--accent);
 }
 
@@ -170,7 +171,7 @@ a {
 
 .btn-primary {
   background: var(--accent);
-  color: #ecfeff;
+  color: #ffffff;
 }
 
 .btn-primary:active {
@@ -178,8 +179,8 @@ a {
 }
 
 .btn-secondary {
-  background: #e7eef7;
-  color: #0f172a;
+  background: #eef0ff;
+  color: #02027f;
 }
 
 .barcode-preview {
@@ -190,7 +191,7 @@ a {
 .barcode-canvas {
   width: 100%;
   max-width: 100%;
-  border: 1px dashed #c7d2df;
+  border: 1px dashed #b9bbff;
   border-radius: 10px;
   background: #ffffff;
 }
@@ -204,7 +205,7 @@ a {
 .camera-box {
   width: 100%;
   min-height: 220px;
-  background: #0f172a;
+  background: #02027f;
   border-radius: 12px;
   overflow: hidden;
   margin-top: 10px;
@@ -235,24 +236,25 @@ a {
 
 .status-text {
   margin: 10px 0 0;
-  color: #0369a1;
+  color: #02027f;
   font-weight: 600;
 }
 
 .error-text {
   margin: 10px 0 0;
-  color: #b91c1c;
+  color: #01015a;
   font-weight: 600;
 }
 
 .raw-output {
   margin: 0 0 12px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: #f7f7ff;
+  border: 1px solid #d9dcff;
   border-radius: 10px;
   padding: 10px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.84rem;
+  color: #02027f;
   word-break: break-word;
 }
 
@@ -263,8 +265,8 @@ a {
 }
 
 .details-grid div {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: #f7f7ff;
+  border: 1px solid #d9dcff;
   border-radius: 10px;
   padding: 10px;
 }
@@ -276,7 +278,7 @@ a {
 
 .details-grid p {
   margin: 0;
-  color: #0f172a;
+  color: #02027f;
 }
 
 @media (min-width: 640px) {
