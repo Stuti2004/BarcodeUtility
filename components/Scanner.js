@@ -10,6 +10,7 @@ const readers = [
   "codabar_reader",
   "i2of5_reader",
 ];
+const primaryReaders = ["code_128_reader"];
 
 export default function Scanner({ onDecode }) {
   const [isScanning, setIsScanning] = useState(false);
@@ -26,6 +27,70 @@ export default function Scanner({ onDecode }) {
     const imported = await import("quagga");
     quaggaRef.current = imported.default || imported;
     return quaggaRef.current;
+  };
+
+  const decodeSingleAsync = (Quagga, config) =>
+    new Promise((resolve) => {
+      Quagga.decodeSingle(config, (result) => resolve(result));
+    });
+
+  const loadImageElement = (src) =>
+    new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error("IMAGE_LOAD_FAILED"));
+      image.src = src;
+    });
+
+  const renderImageVariant = (image, rotationDeg) => {
+    const maxSize = 1800;
+    const sourceWidth = image.naturalWidth || image.width;
+    const sourceHeight = image.naturalHeight || image.height;
+    const scale = Math.min(1, maxSize / Math.max(sourceWidth, sourceHeight));
+    const scaledWidth = Math.max(1, Math.round(sourceWidth * scale));
+    const scaledHeight = Math.max(1, Math.round(sourceHeight * scale));
+
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+    if (!context) {
+      throw new Error("CANVAS_CONTEXT_FAILED");
+    }
+
+    if (rotationDeg === 90 || rotationDeg === 270) {
+      canvas.width = scaledHeight;
+      canvas.height = scaledWidth;
+    } else {
+      canvas.width = scaledWidth;
+      canvas.height = scaledHeight;
+    }
+
+    context.save();
+
+    if (rotationDeg === 90) {
+      context.translate(canvas.width, 0);
+      context.rotate(Math.PI / 2);
+    } else if (rotationDeg === 180) {
+      context.translate(canvas.width, canvas.height);
+      context.rotate(Math.PI);
+    } else if (rotationDeg === 270) {
+      context.translate(0, canvas.height);
+      context.rotate(-Math.PI / 2);
+    }
+
+    context.drawImage(image, 0, 0, scaledWidth, scaledHeight);
+    context.restore();
+
+    return canvas.toDataURL("image/jpeg", 0.98);
+  };
+
+  const buildUploadVariants = async (objectUrl) => {
+    const image = await loadImageElement(objectUrl);
+    return [
+      objectUrl,
+      renderImageVariant(image, 0),
+      renderImageVariant(image, 90),
+      renderImageVariant(image, 270),
+    ];
   };
 
   const stopCamera = () => {
@@ -179,40 +244,75 @@ export default function Scanner({ onDecode }) {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    const imageUrl = URL.createObjectURL(file);
+
     try {
       const Quagga = await getQuagga();
-      const imageUrl = URL.createObjectURL(file);
       setStatusText("Decoding uploaded image...");
 
-      Quagga.decodeSingle(
+      const variants = await buildUploadVariants(imageUrl);
+      const attemptConfigs = [
         {
-          src: imageUrl,
-          numOfWorkers: 0,
+          decoder: { readers: primaryReaders },
           locate: true,
-          decoder: {
-            readers,
-          },
+          locator: { halfSample: false, patchSize: "x-small" },
+          inputStream: { size: 1600 },
         },
-        (result) => {
-          URL.revokeObjectURL(imageUrl);
-          if (uploadInputRef.current) {
-            uploadInputRef.current.value = "";
-          }
+        {
+          decoder: { readers: primaryReaders },
+          locate: false,
+          inputStream: { size: 1800 },
+        },
+        {
+          decoder: { readers },
+          locate: true,
+          locator: { halfSample: true, patchSize: "small" },
+          inputStream: { size: 1400 },
+        },
+        {
+          decoder: { readers },
+          locate: false,
+          inputStream: { size: 1800 },
+        },
+      ];
 
+      let matchedCode = "";
+
+      for (const src of variants) {
+        for (const config of attemptConfigs) {
+          const result = await decodeSingleAsync(Quagga, {
+            src,
+            numOfWorkers: 0,
+            ...config,
+          });
           const code = result?.codeResult?.code;
-          if (!code) {
-            setErrorText("No barcode was detected in the uploaded image.");
-            setStatusText("");
-            return;
+          if (code) {
+            matchedCode = code;
+            break;
           }
-
-          onDecode(code);
-          setStatusText("Barcode detected from uploaded image.");
         }
-      );
+        if (matchedCode) break;
+      }
+
+      if (uploadInputRef.current) {
+        uploadInputRef.current.value = "";
+      }
+
+      if (!matchedCode) {
+        setErrorText(
+          "No barcode was detected in the uploaded image. Use a sharper image with the barcode centered and enough white space around it."
+        );
+        setStatusText("");
+        return;
+      }
+
+      onDecode(matchedCode);
+      setStatusText("Barcode detected from uploaded image.");
     } catch {
       setErrorText("Unable to read uploaded image.");
       setStatusText("");
+    } finally {
+      URL.revokeObjectURL(imageUrl);
     }
   };
 
