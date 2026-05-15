@@ -2,6 +2,8 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import Scanner from "../components/Scanner";
 
+const STORAGE_KEY = "barcode_web_records_v1";
+
 function parsePayload(payload) {
   if (!payload) return null;
   const cleaned = payload.trim();
@@ -54,9 +56,55 @@ function parsePayload(payload) {
   };
 }
 
+function findStoredDetails(decodedValue, parsedDetails) {
+  if (typeof window === "undefined") return null;
+  if (!decodedValue || !parsedDetails) return null;
+
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+
+    const records = JSON.parse(raw);
+    const cleaned = decodedValue.trim();
+
+    const byPayload = records[`payload:${cleaned}`];
+    if (byPayload) {
+      return {
+        source: "lookup",
+        modelNo: byPayload.modelNo || "-",
+        sequenceNumber: byPayload.sequenceNumber || "-",
+        installationDate: byPayload.installationDate || "-",
+        location: byPayload.location || "-",
+      };
+    }
+
+    if (parsedDetails.source === "generic") {
+      const bySequence = records[`sequence:${parsedDetails.sequenceNumber}`];
+      if (bySequence) {
+        return {
+          source: "lookup",
+          modelNo: bySequence.modelNo || "-",
+          sequenceNumber: bySequence.sequenceNumber || "-",
+          installationDate: bySequence.installationDate || "-",
+          location: bySequence.location || "-",
+        };
+      }
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
 export default function ScanPage() {
   const [decodedValue, setDecodedValue] = useState("");
-  const details = useMemo(() => parsePayload(decodedValue), [decodedValue]);
+  const details = useMemo(() => {
+    const parsed = parsePayload(decodedValue);
+    if (!parsed) return null;
+    const stored = findStoredDetails(decodedValue, parsed);
+    return stored || parsed;
+  }, [decodedValue]);
 
   return (
     <main className="page-shell">
@@ -103,6 +151,11 @@ export default function ScanPage() {
               {details.source === "generic" && (
                 <p className="muted">
                   Generic barcode detected; mapped to Sequence Number.
+                </p>
+              )}
+              {details.source === "lookup" && (
+                <p className="muted">
+                  Matched saved details from this device.
                 </p>
               )}
               </>

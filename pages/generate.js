@@ -3,6 +3,8 @@ import Link from "next/link";
 import BarcodeForm from "../components/BarcodeForm";
 import BarcodeCanvas from "../components/BarcodeCanvas";
 
+const STORAGE_KEY = "barcode_web_records_v1";
+
 function buildPayload(values) {
   const compactDate = values.installationDate.replaceAll("-", "");
   return [
@@ -13,8 +15,35 @@ function buildPayload(values) {
   ].join("~");
 }
 
+function saveBarcodeRecord(values, payload) {
+  if (typeof window === "undefined") return;
+
+  const normalized = {
+    modelNo: values.modelNo.trim() || "-",
+    sequenceNumber: values.sequenceNumber.trim() || "-",
+    installationDate: values.installationDate || "-",
+    location: values.location.trim() || "-",
+  };
+
+  try {
+    const existing = window.localStorage.getItem(STORAGE_KEY);
+    const records = existing ? JSON.parse(existing) : {};
+    records[`payload:${payload}`] = normalized;
+    records[`sequence:${normalized.sequenceNumber}`] = normalized;
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  } catch {
+    // Ignore local storage write failures.
+  }
+}
+
 export default function GeneratePage() {
   const [formData, setFormData] = useState(null);
+
+  const handleGenerate = (values) => {
+    const payload = buildPayload(values);
+    saveBarcodeRecord(values, payload);
+    setFormData(values);
+  };
 
   const barcodeValue = useMemo(() => {
     if (!formData) return "";
@@ -30,7 +59,7 @@ export default function GeneratePage() {
         <h1>Generate Barcode</h1>
       </header>
 
-      <BarcodeForm onGenerate={setFormData} />
+      <BarcodeForm onGenerate={handleGenerate} />
 
       <section className="panel">
         <h2>Barcode Preview</h2>
