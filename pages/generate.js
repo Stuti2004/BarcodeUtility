@@ -4,12 +4,13 @@ import BarcodeForm from "../components/BarcodeForm";
 import BarcodeCanvas from "../components/BarcodeCanvas";
 
 function buildPayload(values) {
+  const compactDate = values.installationDate.replaceAll("-", "");
   return [
-    `MODEL=${encodeURIComponent(values.modelNo.trim())}`,
-    `SEQ=${encodeURIComponent(values.sequenceNumber.trim())}`,
-    `DATE=${values.installationDate}`,
-    `LOC=${encodeURIComponent(values.location.trim())}`,
-  ].join(";");
+    encodeURIComponent(values.modelNo.trim()),
+    encodeURIComponent(values.sequenceNumber.trim()),
+    compactDate,
+    encodeURIComponent(values.location.trim()),
+  ].join("~");
 }
 
 export default function GeneratePage() {

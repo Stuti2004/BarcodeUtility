@@ -4,6 +4,25 @@ import Scanner from "../components/Scanner";
 
 function parsePayload(payload) {
   if (!payload) return null;
+
+  if (payload.includes("~")) {
+    const parts = payload.split("~");
+    if (parts.length !== 4) return null;
+
+    const rawDate = parts[2] || "";
+    const normalizedDate =
+      rawDate.length === 8
+        ? `${rawDate.slice(0, 4)}-${rawDate.slice(4, 6)}-${rawDate.slice(6, 8)}`
+        : rawDate;
+
+    return {
+      modelNo: decodeURIComponent(parts[0] || "") || "-",
+      sequenceNumber: decodeURIComponent(parts[1] || "") || "-",
+      installationDate: normalizedDate || "-",
+      location: decodeURIComponent(parts[3] || "") || "-",
+    };
+  }
+
   const parts = payload.split(";");
   const mapped = {};
 

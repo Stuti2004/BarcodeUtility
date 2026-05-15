@@ -21,11 +21,11 @@ export default function BarcodeCanvas({ value }) {
           format: "CODE128",
           lineColor: "#111827",
           background: "#ffffff",
-          width: 2,
-          height: 110,
+          width: 1.3,
+          height: 88,
           displayValue: true,
-          fontSize: 14,
-          margin: 12,
+          fontSize: 12,
+          margin: 6,
         });
       } catch {
         setDrawError("Could not render barcode. Please try again.");
