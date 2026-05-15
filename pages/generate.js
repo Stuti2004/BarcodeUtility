@@ -6,13 +6,9 @@ import BarcodeCanvas from "../components/BarcodeCanvas";
 const STORAGE_KEY = "barcode_web_records_v1";
 
 function buildPayload(values) {
-  const compactDate = values.installationDate.replaceAll("-", "");
-  return [
-    encodeURIComponent(values.modelNo.trim()),
-    encodeURIComponent(values.sequenceNumber.trim()),
-    compactDate,
-    encodeURIComponent(values.location.trim()),
-  ].join("~");
+  // Keep the barcode value short for better scan reliability on mobile.
+  // Full details are saved in local storage and resolved on scan.
+  return values.sequenceNumber.trim();
 }
 
 function saveBarcodeRecord(values, payload) {

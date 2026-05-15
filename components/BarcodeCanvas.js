@@ -17,16 +17,38 @@ export default function BarcodeCanvas({ value }) {
 
         if (cancelled || !canvasRef.current) return;
 
+        const pixelRatio =
+          typeof window !== "undefined"
+            ? Math.max(2, Math.ceil(window.devicePixelRatio || 2))
+            : 2;
+
+        // Draw at high internal resolution and display at smaller CSS size
+        // for crisp exports and cleaner scan lines.
+        const moduleWidth = 2;
+        const barHeight = 62;
+        const quietMargin = 8;
+
         JsBarcode(canvasRef.current, value, {
           format: "CODE128",
-          lineColor: "#111827",
+          lineColor: "#02027f",
           background: "#ffffff",
-          width: 1.3,
-          height: 88,
-          displayValue: true,
-          fontSize: 12,
-          margin: 6,
+          width: moduleWidth * pixelRatio,
+          height: barHeight * pixelRatio,
+          displayValue: false,
+          margin: quietMargin * pixelRatio,
+          flat: true,
         });
+
+        const renderedWidth = Math.max(
+          1,
+          Math.round(canvasRef.current.width / pixelRatio)
+        );
+        const renderedHeight = Math.max(
+          1,
+          Math.round(canvasRef.current.height / pixelRatio)
+        );
+        canvasRef.current.style.width = `${renderedWidth}px`;
+        canvasRef.current.style.height = `${renderedHeight}px`;
       } catch {
         setDrawError("Could not render barcode. Please try again.");
       }
@@ -56,10 +78,10 @@ export default function BarcodeCanvas({ value }) {
       <canvas ref={canvasRef} className="barcode-canvas" />
       <div className="button-row">
         <button onClick={() => downloadImage("png")} className="btn-secondary">
-          Download PNG
+          Download HQ PNG
         </button>
         <button onClick={() => downloadImage("jpg")} className="btn-secondary">
-          Download JPG
+          Download HQ JPG
         </button>
       </div>
     </div>
