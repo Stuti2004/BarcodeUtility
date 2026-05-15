@@ -21,6 +21,9 @@ export default function Scanner({ onDecode }) {
   const quaggaRef = useRef(null);
   const detectHandlerRef = useRef(null);
   const uploadInputRef = useRef(null);
+  const lastDetectedCodeRef = useRef("");
+  const detectStreakRef = useRef(0);
+  const lastDetectAtRef = useRef(0);
 
   const getQuagga = async () => {
     if (quaggaRef.current) return quaggaRef.current;
@@ -114,6 +117,9 @@ export default function Scanner({ onDecode }) {
 
     setIsScanning(false);
     setStatusText("");
+    lastDetectedCodeRef.current = "";
+    detectStreakRef.current = 0;
+    lastDetectAtRef.current = 0;
   };
 
   const preflightCameraAccess = async () => {
@@ -195,10 +201,17 @@ export default function Scanner({ onDecode }) {
             target: cameraContainerRef.current,
             constraints: {
               facingMode: "environment",
+              width: { ideal: 1920 },
+              height: { ideal: 1080 },
             },
           },
           decoder: {
-            readers,
+            // Camera mode is optimized for app-generated barcodes (CODE128).
+            readers: primaryReaders,
+          },
+          locator: {
+            halfSample: false,
+            patchSize: "small",
           },
           locate: true,
         },
@@ -213,8 +226,35 @@ export default function Scanner({ onDecode }) {
 
           detectHandlerRef.current = (result) => {
             const code = result?.codeResult?.code;
+            const format = result?.codeResult?.format;
             if (!code) return;
-            onDecode(code);
+
+            if (format !== "code_128") {
+              return;
+            }
+
+            const cleanedCode = code.trim();
+            if (!cleanedCode) return;
+
+            const now = Date.now();
+            const recentWindowMs = 1200;
+            const isRecent = now - lastDetectAtRef.current < recentWindowMs;
+
+            if (isRecent && cleanedCode === lastDetectedCodeRef.current) {
+              detectStreakRef.current += 1;
+            } else {
+              lastDetectedCodeRef.current = cleanedCode;
+              detectStreakRef.current = 1;
+            }
+            lastDetectAtRef.current = now;
+
+            // Require repeated detection to reduce one-frame false positives.
+            if (detectStreakRef.current < 2) {
+              setStatusText("Hold steady... verifying barcode.");
+              return;
+            }
+
+            onDecode(cleanedCode);
             setStatusText("Barcode detected from camera.");
             stopCamera();
           };
